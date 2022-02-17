@@ -1,0 +1,225 @@
+﻿@using FileArchiver.Common.ViewModels
+@{
+    ViewData["Title"] = "GetToAdminView";
+}
+
+@model UserViewModel
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <div class="container mt-4">
+            <div class="row mb-5">
+                <div class="col-md-4">
+                    <h5 class="ml-3 text-left" style="top: 60px">Logged in admin: @Model.Name</h5>
+                </div>
+                <div class="col-md-3">
+                    @Html.ActionLink(linkText: "Edit user details", actionName: "UpdateUser", routeValues: null, htmlAttributes: new { @class = "btn btn-success btn-sm text-center mr-5", @style = "top: 60px;" })
+                </div>
+                <div class="col-md-3">
+                    @Html.ActionLink(linkText: "Register new user", actionName: "RegisterUser", routeValues: null, htmlAttributes: new { @class = "btn btn-success btn-sm text-center mr-5", @style = "top: 60px;" })
+                </div>
+                <div class="col-md-2">
+                    @Html.ActionLink(linkText: "Log out", controllerName: "Login", actionName: "Logout", routeValues: null, htmlAttributes: new { @class = "btn btn-danger btn-sm text-center mr-5", @style = "top: 60px;" })
+                </div>
+            </div>
+            <div>
+                <div class="form-group mt-4">
+                    <ejs-grid id="Grid" dataSource="@ViewBag.DataSource" allowSorting="true" allowPaging="true" width="1200" height="400" load="load" allowResizing="true" enableHover="true" enableStickyHeader="true" toolbar="@(new List<string>() {"Search"})" rowSelected="rowSelected">
+                        <e-grid-selectionSettings persistSelection="true"></e-grid-selectionSettings>
+                        <e-grid-columns>
+                            <e-grid-column type="checkbox" width="50"></e-grid-column>
+                            <e-grid-column field="FileId" isPrimaryKey="true" headerText="Id" visible="false" headerTextAlign="Center" width="150" textAlign="Left" customAttributes=@(new { @class = "customcss" })></e-grid-column>
+                            <e-grid-column field="FileName" headerText="Document Name" headerTextAlign="Center" width="150" textAlign="Left" customAttributes=@(new { @class = "customcss" })></e-grid-column>
+                            <e-grid-column field="DocumentType.DocumentName" headerText="Document Type" headerTextAlign="Center" width="180" textAlign="Left" customAttributes=@(new { @class = "customcss" })></e-grid-column>
+                            <e-grid-column field="UserVM.Name" headerText="User" headerTextAlign="Center" width="180" textAlign="Left" customAttributes=@(new { @class = "customcss" })></e-grid-column>
+                            <e-grid-column field="Created" headerText="Date" headerTextAlign="Center" width="130" editType="datetimepickeredit" textAlign="Center" format="dd-MM-yyyy hh:MM" customAttributes=@(new { @class = "customcss" })></e-grid-column>
+                            <e-grid-column headerText="" template="#download" headerTextAlign="Center" textAlign="Center" width="50" customAttributes=@(new { @class = "customcss" })></e-grid-column>
+                            <e-grid-column headerText="" template="#delete" headerTextAlign="Center" textAlign="Center" width="50" customAttributes=@(new { @class = "customcss" })></e-grid-column>
+
+                        </e-grid-columns>
+                    </ejs-grid>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    @Html.ActionLink(linkText: "Upload Files", actionName: "UploadFile", routeValues: null, htmlAttributes: new { @class = "btn btn-success mt-4", @style = "position: relative; bottom:0px; left:20px" })
+                </div>
+            </div>
+        </div>
+    @section scripts {
+        <script id="download" type="text/x-template">
+            @{
+                        <button class="btn btn-success btn-sm text-center mr-5" onclick="downloadFile()"><i class="fa fa-download" style="font-size: 20px; color:black;"></i></button>
+                            
+            }
+        </script>
+        <script id="delete" type="text/x-template">
+            @{
+                        <button class="btn btn-danger btn-sm text-center mr-5" onclick="deleteFile()"><i class="fa fa-trash-o" style="font-size: 20px; color:white;"></i></button>
+                            
+            }
+        </script>
+        <script type="text/javascript">
+            function load() {
+                var grid = document.getElementById("Grid").ej2_instances[0];
+                let htmlCollection = grid.element.getElementsByClassName('e-checkselect');
+                for (let item of htmlCollection) {
+                    item.style.display = "none";
+                }
+                var rowHeight = grid.getRowHeight();
+                var gridHeight = grid.height;
+                var pageSize = grid.pageSettings.pageSize;
+                var pageResize = (gridHeight - (pageSize * rowHeight)) / rowHeight;
+                grid.pageSettings.pageSize = pageSize + Math.round(pageResize);
+                grid.gridLines = "Both";
+            }
+            document.getElementById('search').addEventListener('click', () => {
+                var grid = document.getElementById("Grid").ej2_instances[0];
+                var searchString = "";
+                grid.search(searchString);
+            });
+            function rowSelected() {
+                var grid = document.getElementById("Grid").ej2_instances[0];
+                var selectedRecord = grid.getSelectedRecords()[0];
+                return selectedRecord;
+            }
+            function deleteFile() {
+                var grid = document.getElementById("Grid").ej2_instances[0];
+                var fileNumber = rowSelected().FileId;
+                var selectedRow = grid.getSelectedRowIndexes()[0];
+                $.ajax({
+                    type: 'get',
+                    async: true,
+                    url: "/Home/GetFileById/" + fileNumber,
+                    contentType: "application/json",
+                    success: function (data) {
+                        let dataObj = JSON.parse(JSON.stringify(data));
+                        console.log(dataObj);
+                        $.ajax({
+                            type: 'post',
+                            url: "/Home/DeleteFile",
+                            data: dataObj,
+                            success: function (response) {
+                                grid.dataSource.splice(selectedRow, 1);
+                                grid.refresh();
+                            },
+                            error: () => {
+                                alert("Error vo Home DeleteFile");
+                            }  
+                        });
+                    },
+                    error: () => {
+                        alert("Error vo get ID");
+                    }
+                });
+            };
+            //function actionBegin(args) {
+            //    if (args.requestType == "delete") {
+            //        var fileNumber = rowSelected().FileId;
+            //        console.log(fileNumber);
+            //         $.ajax({
+            //            type: 'get',
+            //            async: true,
+            //            url: "/Home/GetFileById/" + fileNumber,
+            //            contentType: "application/text",
+            //            success: function (response) {
+            //                $.ajax({
+            //                    type: 'delete',
+            //                    async: true,
+            //                    url: "/Home/DeleteFile",
+            //                    data: fileNumber,
+            //                    contentType: "application/text",
+            //                    success: function (response) {
+            //                        alert("Deleted" + response);
+            //                    },
+            //                    error: () => {
+            //                    }
+            //                });
+            //            },
+            //         error: () => {
+            //         }
+            //        });
+            //    }
+            //}
+            function downloadFile() {
+                var fileNumber = rowSelected().FileId;
+                $.ajax({
+                    type: 'get',
+                    async: true,
+                    url: "/Home/DownloadFile/" + fileNumber,
+                    contentType: "application/text",
+                    success: function (response) {
+                        response ? window.location = '@Url.Action("DownloadFileQuery", "Home")?fileId=' + fileNumber + '' : alert("You can download only your files");
+                    },
+                    error: () => {
+                    }
+                });
+            }
+        </script>
+    }
+    <style>
+        .e-grid .e-rowcell.customcss {
+            font-size: 15px;
+        }
+
+        .e-grid .e-headercell.customcss {
+            background-color: lightgray;
+            color: darkslategray;
+            font-family: Arial;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .main {
+            display: block;
+            position: relative;
+            padding-left: 45px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        input[type=checkbox] {
+            visibility: hidden;
+        }
+        .box {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            height: 25px;
+            width: 25px;
+            background-color: aliceblue;
+        }
+
+        .main:hover input ~ .box {
+            background-color: green;
+        }
+
+        .main input:active ~ .box {
+            background-color: red;
+        }
+
+        .main input:checked ~ .box {
+            background-color: green;
+        }
+
+        .box:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+
+        .main input:checked ~ .box:after {
+            display: block;
+        }
+
+        .main .box:after {
+            left: 10px;
+            bottom: 7px;
+            width: 6px;
+            height: 12px;
+            border: solid white;
+            border-width: 0 4px 4px 0;
+            -webkit-transform: rotate(45deg);
+            -ms-transform: rotate(45deg);
+            transform: rotate(45deg);
+        }
+    </style>

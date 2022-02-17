@@ -1,0 +1,65 @@
+﻿@using FileArchiver.Common.ViewModels
+@model RegisterNewUserViewModel
+
+<form action="/" method="post" class="mt-4 text-center pb-4" id="registerUserForm">
+    <div class="form-group text-center mb-4">
+        <div class="row">
+            <div class="col-md-12">
+                @Html.LabelFor(x => x.Username, "Insert username", new { @class = "text-left mr-3" })
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                @Html.TextBoxFor(x => x.Username, new { @id = "username" })
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-12">
+                @Html.LabelFor(x => x.FullName, "Insert name", new { @class = "text-left mr-4" })
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                @Html.TextBoxFor(x => x.FullName, new { @id = "fullName" })
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-12">
+                @Html.LabelFor(x => x.ZipPassword, "Insert password", new { @class = "text-left mr-3" })
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-12">
+                @Html.PasswordFor(x => x.ZipPassword, new { @id = "password" })
+            </div>
+        </div>
+                <div class="form-group mt-4">
+                    <div class="col-md-12 text-center">
+                        <button type="submit" class="btn btn-success  mt-4" asp-action="RegisterUser" asp-controller="Home" id="registerBtn">Register new user</button>
+                    </div>
+                </div>
+            </div>
+</form>
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            @if(ViewBag.ErrorMessage != string.Empty)
+            {
+                <h3 class="text-danger text-center">@ViewBag.ErrorMessage</h3>
+            }
+        </div>
+    </div>
+</div>
+
+@section scripts {
+<script>
+    $('#registerUserForm').submit(function () {
+        if ($('#password').val() == '' || $("#fullName").val() == '' || $("#username").val() == null) {
+            $("#registerBtn").attr('disabled', 'disabled');
+            alert("You must enter username, full name and password!")
+            return;
+        }
+        $(this).find(':submit').attr('disabled', 'disabled');
+    });
+</script>
+}
